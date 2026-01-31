@@ -14,12 +14,12 @@ MartianChess/
 │   │
 │   └── ai/                 # Dossier pour vos IAs
 │       ├── __init__.py
-│       ├── minimax.py      # L'algorithme Minimax et Alpha-Bêta
-│       └── heuristics.py   # Vos différentes fonctions d'évaluation
+│       ├── minimax.py      # Algorithme Minimax et Alpha-Bêta
+│       └── heuristics.py   # Fonctions d'évaluation
 │
 ├── tests/                  # Tests unitaires (Bonus)
 │   ├── test_rules.py
 │   └── test_state.py
 │
-└── experiments/            # Pour générer les données du rapport 
+└── experiments/            # Génération des données pour le rapport
     └── tournament.py       # Script pour lancer 50+ parties IA vs IA
