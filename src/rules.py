@@ -1,91 +1,112 @@
 # rules.py
-import model
 
-class RuleEngine:
-    
-    @staticmethod
-    def get_player_zone(player_id):
-        """
-        Renvoie l'intervalle des lignes appartenant au joueur.
-        - Joueur 1 (Bas) : lignes 0 à 3.
-        - Joueur 2 (Haut) : lignes 4 à 7.
-        Sert à déterminer quelles pièces le joueur a le droit de bouger.
-        """
-        pass
+from constants import *
 
-    @staticmethod
-    def get_legal_moves(gamestate):
-        """
-        LA fonction la plus importante pour l'IA.
-        1. Identifie la zone du joueur courant via gamestate.current_player.
-        2. Parcourt toutes les cases de cette zone.
-        3. Pour chaque pièce trouvée, appelle les fonctions de mouvement spécifiques (_get_pawn_moves, etc.).
-        4. Renvoie une liste de tous les coups possibles [(start_pos, end_pos), ...].
-        """
-        pass
+def in_bounds(r, c):
+    return 0 <= r < ROWS and 0 <= c < COLS
 
-    @staticmethod
-    def _get_pawn_moves(gamestate, row, col):
-        """
-        Logique spécifique au Pion :
-        - Déplacement d'1 case en diagonale (4 directions possibles).
-        - Vérifie si la case cible est libre ou contient un ennemi.
-        """
-        pass
+def is_own_side(r, player):
+    return (r < MIDLINE and player == 0) or (r >= MIDLINE and player == 1)
 
-    @staticmethod
-    def _get_drone_moves(gamestate, row, col):
-        """
-        Logique spécifique au Drone :
-        - 1 ou 2 cases orthogonalement (Hori/Vert).
-        - Vérifie qu'on ne saute pas par-dessus une pièce.
-        """
-        pass
+def piece_owner(r):
+    return 0 if r < MIDLINE else 1
 
-    @staticmethod
-    def _get_queen_moves(gamestate, row, col):
-        """
-        Logique spécifique à la Reine :
-        - Distance illimitée dans les 8 directions.
-        - S'arrête avant un obstacle (ou capture l'obstacle ennemi).
-        """
-        pass
 
-    @staticmethod
-    def apply_move(gamestate, move):
-        """
-        Exécute un coup sur l'état du jeu.
-        1. Déplace la pièce de départ à arrivée.
-        2. Gère la capture : si arrivée occupée, ajoute les points au score du joueur courant.
-        3. Gère le compteur de Deadlock (reset si capture, +1 sinon).
-        4. Vérifie la promotion éventuelle (fusion).
-        5. Change le tour (switch_turn).
-        """
-        pass
+def count_all(board):
+    counts = {PAWN: 0, DRONE: 0, QUEEN: 0}
+    for r in range(ROWS):
+        for c in range(COLS):
+            if board[r][c] != EMPTY:
+                counts[board[r][c]] += 1
+    return counts
 
-    @staticmethod
-    def check_promotion(gamestate, move):
-        """
-        Vérifie si le coup est une fusion (ex: Drone sur Pion).
-        Si oui, remplace les deux pièces par la pièce supérieure.
-        """
-        pass
 
-    @staticmethod
-    def is_game_over(gamestate):
-        """
-        Vérifie les conditions de fin :
-        1. Une zone est-elle totalement vide ? 
-        2. Le compteur de Deadlock a-t-il atteint 7 tours ? 
-        Renvoie True ou False.
-        """
-        pass
+def count_player(board, player):
+    counts = {PAWN: 0, DRONE: 0, QUEEN: 0}
+    for r in range(ROWS):
+        for c in range(COLS):
+            if board[r][c] != EMPTY and piece_owner(r) == player:
+                counts[board[r][c]] += 1
+    return counts
 
-    @staticmethod
-    def get_winner(gamestate):
-        """
-        Compare les scores.
-        Gère les égalités selon la règle : si fin par zone vide, le joueur courant gagne l'égalité.
-        Renvoie l'ID du gagnant ou None si match nul strict.
-        """
-        pass
+
+def piece_available(board, piece_type):
+    counts_all = count_all(board)
+    return counts_all[piece_type] < TOTAL_PIECES[piece_type]
+
+
+def get_piece_moves(board, r, c, current_player):
+    piece = board[r][c]
+    moves = []
+
+    # ---------- Déplacements normaux ----------
+
+    if piece == PAWN:
+        for dr, dc in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            nr, nc = r + dr, c + dc
+            if in_bounds(nr, nc):
+                if board[nr][nc] == EMPTY or piece_owner(nr) != current_player:
+                    moves.append((r, c, nr, nc))
+
+    elif piece == DRONE:
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            for dist in [1, 2]:
+                nr, nc = r + dr * dist, c + dc * dist
+                if not in_bounds(nr, nc):
+                    break
+                if board[nr][nc] == EMPTY:
+                    moves.append((r, c, nr, nc))
+                else:
+                    if piece_owner(nr) != current_player:
+                        moves.append((r, c, nr, nc))
+                    break
+
+    elif piece == QUEEN:
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1),
+                       (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            nr, nc = r + dr, c + dc
+            while in_bounds(nr, nc):
+                if board[nr][nc] == EMPTY:
+                    moves.append((r, c, nr, nc))
+                else:
+                    if piece_owner(nr) != current_player:
+                        moves.append((r, c, nr, nc))
+                    break
+                nr += dr
+                nc += dc
+
+    # ----------- FIELD PROMOTIONS OFFICIELLES -----------
+
+    player_counts = count_player(board, current_player)
+
+    # Pawn + Pawn -> Drone
+    if piece == PAWN and player_counts[DRONE] == 0 and piece_available(board, DRONE):
+        for dr, dc in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            nr, nc = r + dr, c + dc
+            if in_bounds(nr, nc) and board[nr][nc] == PAWN and piece_owner(nr) == current_player:
+                moves.append(("fusion", r, c, nr, nc, DRONE))
+
+    # Pawn + Drone -> Queen
+    if piece == PAWN and player_counts[QUEEN] == 0 and piece_available(board, QUEEN):
+        for dr, dc in [(-1, -1), (-1, 1), (1, -1), (1, 1)]:
+            nr, nc = r + dr, c + dc
+            if in_bounds(nr, nc) and board[nr][nc] == DRONE and piece_owner(nr) == current_player:
+                moves.append(("fusion", r, c, nr, nc, QUEEN))
+
+    # Drone + Pawn -> Queen
+    if piece == DRONE and player_counts[QUEEN] == 0 and piece_available(board, QUEEN):
+        for dr, dc in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            for dist in [1, 2]:
+                nr, nc = r + dr * dist, c + dc * dist
+                if not in_bounds(nr, nc):
+                    break
+                if board[nr][nc] == EMPTY:
+                    continue
+                if piece_owner(nr) != current_player:
+                    break
+                if board[nr][nc] == PAWN:
+                    moves.append(("fusion", r, c, nr, nc, QUEEN))
+                break
+
+
+    return moves

@@ -1,23 +1,56 @@
 # main.py
-import model
-import view
-import rules
+
+import pygame
+from model import GameState
+from view import GUI
 
 def main():
-    """
-    Fonction principale du programme.
-    1. Instancie le modèle (GameState) et la vue (ConsoleView).
-    2. Initialise le plateau (initialize_board).
-    3. Lance la boucle de jeu (While not game over):
-        a. Affiche le plateau.
-        b. Détermine qui joue (Humain ou IA).
-        c. Si Humain : demande l'input via view.
-        d. Si IA : demande le coup via l'algorithme (à implémenter plus tard).
-        e. Vérifie si le coup est légal via RuleEngine.
-        f. Applique le coup via RuleEngine.apply_move.
-    4. Une fois la boucle finie, affiche le résultat final.
-    """
-    pass
+    game = GameState()
+    gui = GUI(game)
+    clock = pygame.time.Clock()
+    running = True
+
+    while running:
+        clock.tick(60)
+        gui.update()
+
+        if game.is_terminal():
+            continue
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                cell = gui.get_cell_from_mouse(pygame.mouse.get_pos())
+                if not cell:
+                    continue
+
+                r, c = cell
+
+                if gui.selected is None:
+                    if game.board[r][c] != ".":
+                        gui.selected = (r, c)
+                else:
+                    r1, c1 = gui.selected
+                    chosen_move = None
+
+                    for m in game.get_legal_moves(game.current_player):
+                        # Coup normal
+                        if len(m) == 4 and m == (r1, c1, r, c):
+                            chosen_move = m
+                            break
+                        # Fusion
+                        elif len(m) == 6 and m[1] == r1 and m[2] == c1 and m[3] == r and m[4] == c:
+                            chosen_move = m
+                            break
+
+                    if chosen_move:
+                        game.apply_move(chosen_move)
+
+                    gui.selected = None
+
+    pygame.quit()
 
 if __name__ == "__main__":
     main()
