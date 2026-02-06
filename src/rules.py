@@ -110,3 +110,18 @@ def get_piece_moves(board, r, c, current_player):
 
 
     return moves
+
+# determine le vainqueur, Renvoie: 0 ou 1 (ID du gagnant), None : Match nul (Tie)
+def get_winner(scores, moves_without_capture, current_player):
+    if scores[0] > scores[1]:
+        return 0
+    if scores[1] > scores[0]:
+        return 1
+    if moves_without_capture >= 7:
+        return None
+    # Si c'est une fin par "Zone Vide" (pas de deadlock), 
+    # le joueur qui a provoqué la fin (celui qui vient de jouer) gagne le tie-breaker.
+    # Dans model.apply_move, on change le current_player juste à la fin.
+    # Donc le joueur qui a "fini" la partie est l'ADVERSAIRE du current_player actuel.
+    winner_by_tie_break = 1 - current_player
+    return winner_by_tie_break
