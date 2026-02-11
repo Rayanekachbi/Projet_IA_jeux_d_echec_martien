@@ -31,7 +31,15 @@ def main():
 
             # GESTION DES CLICS
             elif event.type == pygame.MOUSEBUTTONDOWN:
+                mouse_pos = pygame.mouse.get_pos()
                 
+                # Vérifier si on clique sur le bouton Deadlock
+                if gui.deadlock_btn_rect.collidepoint(mouse_pos):
+                    game.enable_deadlock()
+                    continue
+
+                # Sinon, gestion normale du jeu (clic sur plateau)
+                cell = gui.get_cell_from_mouse(mouse_pos)
                 # CAS 1 : La partie est finie -> Le clic ferme le jeu
                 if game_over:
                     running = False

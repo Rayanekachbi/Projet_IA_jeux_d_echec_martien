@@ -33,6 +33,11 @@ class GUI:
                 print(f"ERREUR : Impossible de charger l'image {path}")
                 pygame.quit()
                 exit()
+        
+        #Bouton deadlock
+        btn_x = BOARD_WIDTH + 20
+        btn_y = WINDOW_HEIGHT - 80 
+        self.deadlock_btn_rect = pygame.Rect(btn_x, btn_y, 200, 50)
                 
     def draw_board(self):
         for r in range(ROWS):
@@ -178,6 +183,26 @@ class GUI:
         y += 25
         inv_j1 = get_inventory_text(1)
         self.screen.blit(self.small_font.render(inv_j1, True, RED), (margin_x, y))
+        
+        # --- BOUTON DEADLOCK ---
+        if not self.game.deadlock_active:
+            # Dessiner le bouton cliquable
+            pygame.draw.rect(self.screen, GRAY, self.deadlock_btn_rect)
+            pygame.draw.rect(self.screen, WHITE, self.deadlock_btn_rect, 2) # Bordure
+            
+            text_surf = self.info_font.render("Call Deadlock", True, BLACK)
+            text_rect = text_surf.get_rect(center=self.deadlock_btn_rect.center)
+            self.screen.blit(text_surf, text_rect)
+            
+        else:
+            # Afficher le compte à rebours
+            remaining = MAX_TURNS_WITHOUT_CAPTURE - self.game.moves_without_capture
+            msg = f"Deadlock dans : {remaining}"
+            
+            # Affichage en rouge pour alerter
+            text_surf = self.info_font.render(msg, True, RED)
+            # On l'affiche à l'emplacement du bouton
+            self.screen.blit(text_surf, (BOARD_WIDTH + 20, WINDOW_HEIGHT - 70))
 
     def get_cell_from_mouse(self, pos):
         x, y = pos

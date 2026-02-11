@@ -12,6 +12,7 @@ class GameState:
         self.current_player = 0
         self.last_move = None
         self.moves_without_capture = 0
+        self.deadlock_active = False
         self.captured_pieces = {0: [], 1: []}
 
     def initial_board(self):
@@ -90,6 +91,13 @@ class GameState:
         return False
 
     def is_terminal(self):
+        deadlock_reached = self.deadlock_active and self.moves_without_capture >= MAX_TURNS_WITHOUT_CAPTURE
         return (not self.has_pieces(0) or 
                 not self.has_pieces(1) or
-                self.moves_without_capture >= 7)
+                deadlock_reached)
+        
+    def enable_deadlock(self):
+        """Active le compte à rebours pour le match nul"""
+        if not self.deadlock_active:
+            self.deadlock_active = True
+            self.moves_without_capture = 0
