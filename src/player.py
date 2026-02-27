@@ -1,69 +1,95 @@
 # src/player.py
 
-"""
-=============================================================================
-A LIRE POUR LA PROCHAINE FOIS (MODIFICATIONS MAIN.PY)
-=============================================================================
-Quand vous serez prêt à intégrer ce fichier dans main.py, voici ce qu'il faudra changer :
-
-1. Instanciation : Au début de main(), il faudra créer deux joueurs :
-   player1 = HumanPlayer()
-   player2 = AIPlayer(difficulty=2) (par exemple)
-
-2. Boucle de jeu : Au lieu de gérer pygame.MOUSEBUTTONDOWN directement dans la boucle,
-   il faudra demander au joueur courant de jouer :
-   
-   current_p_obj = player1 if game.current_player == 0 else player2
-   move = current_p_obj.get_move(game, gui) # gui est nécessaire pour l'humain
-
-   Si move n'est pas None (l'humain a cliqué ou l'IA a fini de calculer) :
-       game.apply_move(move)
-=============================================================================
-"""
+import ai.heuristics as heur
+from ai.minimax import alpha_beta
 
 class Player:
-    """
-    Classe abstraite représentant un joueur (Humain ou IA).
-    """
+    """Classe abstraite représentant un joueur."""
     def __init__(self, player_id):
         self.player_id = player_id
 
     def get_move(self, state, gui=None):
-        """
-        Détermine le prochain coup à jouer.
-        :param state: L'objet GameState actuel.
-        :param gui: L'interface graphique (nécessaire pour l'humain pour récupérer les clics).
-        :return: Un tuple représentant le coup (r1, c1, r2, c2) ou None si pas encore choisi.
-        """
+        """Retourne le coup choisi par le joueur."""
         pass
+
 
 class HumanPlayer(Player):
     """
-    Représente un joueur humain qui utilise l'interface graphique.
+    Représente un joueur humain.
+    Dans notre architecture avec Pygame, l'humain joue via les événements
+    de la souris gérés dans main.py. Cette classe sert surtout d'étiquette 
+    pour dire au jeu : "Attends que l'utilisateur clique".
     """
+    def __init__(self, player_id):
+        super().__init__(player_id)
+
     def get_move(self, state, gui=None):
-        """
-        Logique pour l'humain :
-        - Doit vérifier les événements Pygame (clics souris) via l'objet gui.
-        - Retourne le coup si un mouvement valide est sélectionné à la souris.
-        - Retourne None tant que le joueur réfléchit.
-        """
-        pass
+        # Pour l'humain, la gestion de la souris se fera dans main.py
+        # Donc cette fonction renvoie None par défaut.
+        return None
+
 
 class AIPlayer(Player):
     """
-    Représente une Intelligence Artificielle.
+    Représente l'ordinateur.
+    Il utilise l'algorithme Alpha-Bêta et une heuristique selon sa difficulté.
     """
-    def __init__(self, player_id, depth=3, heuristic_func=None):
+    def __init__(self, player_id, difficulty=2):
         super().__init__(player_id)
-        # depth : Profondeur de recherche pour Minimax
-        # heuristic_func : La fonction d'évaluation à utiliser
-        pass
+        self.difficulty = difficulty
+        
+        # --- CONFIGURATION DE LA DIFFICULTÉ ---
+        if difficulty == 1:
+            self.depth = 2
+            self.eval_func = heur.eval_score_only
+            print(f"Joueur {player_id} initialisé : IA Facile")
+            
+        elif difficulty == 2:
+            self.depth = 3
+            self.eval_func = heur.eval_material
+            print(f"Joueur {player_id} initialisé : IA Moyenne")
+            
+        else: # difficulty == 3
+            self.depth = 4
+            self.eval_func = heur.eval_positional
+            print(f"Joueur {player_id} initialisé : IA Difficile")
 
     def get_move(self, state, gui=None):
         """
-        Logique pour l'IA :
-        - Appelle l'algorithme Minimax ou Alpha-Bêta situé dans src/ai/minimax.py.
-        - Retourne le meilleur coup trouvé.
+        Calcule et retourne le meilleur coup pour l'IA.
         """
-        pass
+        print(f"IA {self.player_id} réfléchit...")
+        
+        # 1. GESTION STRATÉGIQUE DU DEADLOCK
+        # Si l'IA mène au score et que le deadlock n'est pas actif,
+        # elle appuie "virtuellement" sur le bouton Deadlock pour presser l'adversaire !
+        opponent_id = 1 - self.player_id
+        if state.scores[self.player_id] > state.scores[opponent_id]:
+            if not state.deadlock_active:
+                print(f"L'IA {self.player_id} réclame le Deadlock !")
+                state.enable_deadlock()
+
+        # 2. APPEL DE L'ALGORITHME DE RECHERCHE
+        # On utilise l'Alpha-Bêta pour aller vite
+        # alpha = -infini, beta = +infini, maximizing_player = True
+        meilleur_score, meilleur_coup = alpha_beta(
+            state, 
+            self.depth, 
+            float('-inf'), 
+            float('inf'), 
+            True, 
+            self.player_id, 
+            self.eval_func
+        )
+        
+        # S'il y a un coup légal, on le retourne
+        if meilleur_coup:
+            return meilleur_coup
+            
+        # Sécurité : Si l'IA est complètement bloquée (aucun coup possible),
+        # elle passe son tour (bien que ce soit très rare dans ce jeu).
+        moves = state.get_legal_moves(self.player_id)
+        if moves:
+            return moves[0]
+            
+        return None

@@ -4,26 +4,148 @@
 Implémentation des algorithmes de recherche.
 """
 
+import rules
+
 def minimax(state, depth, maximizing_player, player_id, eval_func):
     """
-    Algorithme Minimax classique sans élagage.
-    :param state: L'état actuel du jeu.
-    :param depth: Profondeur restante à explorer.
-    :param maximizing_player: Booléen (True si c'est au tour de l'IA, False sinon).
-    :param player_id: L'ID de l'IA (pour savoir quel score maximiser).
-    :param eval_func: La fonction d'heuristique à utiliser.
-    :return: Le meilleur score possible ou le meilleur coup (selon l'implémentation).
+    Algorithme Minimax classique.
+    Retourne un tuple : (meilleur_score, meilleur_coup)
     """
-    pass
+    # --- 1. CONDITION D'ARRÊT (La "photo" finale) ---
+    if depth == 0 or state.is_terminal():
+        if state.is_terminal():
+            winner = rules.get_winner(state.scores, state.moves_without_capture, state.current_player)
+            if winner == player_id:
+                return float('inf'), None  # Victoire absolue
+            elif winner is None:
+                return 0, None             # Match nul
+            else:
+                return float('-inf'), None # Défaite absolue
+                
+        return eval_func(state, player_id), None
+
+    best_move = None
+
+    # --- 2. TOUR DE L'IA (Cherche le score MAX) ---
+    if maximizing_player:
+        max_eval = float('-inf')
+        moves = state.get_legal_moves(state.current_player)
+        
+        # Si aucun mouvement n'est possible (cas rare de blocage total)
+        if not moves:
+            return eval_func(state, player_id), None
+            
+        for move in moves:
+            # On utilise TA méthode de copie rapide !
+            simulated_state = state.copy()
+            simulated_state.apply_move(move)
+            
+            # On descend d'un niveau et c'est au tour de l'adversaire (False)
+            eval_score, _ = minimax(simulated_state, depth - 1, False, player_id, eval_func)
+            
+            if eval_score > max_eval:
+                max_eval = eval_score
+                best_move = move
+                
+        return max_eval, best_move
+
+    # --- 3. TOUR DE L'ADVERSAIRE (Cherche le score MIN) ---
+    else:
+        min_eval = float('inf')
+        moves = state.get_legal_moves(state.current_player)
+        
+        if not moves:
+            return eval_func(state, player_id), None
+            
+        for move in moves:
+            # On utilise TA méthode de copie rapide !
+            simulated_state = state.copy()
+            simulated_state.apply_move(move)
+            
+            # On descend d'un niveau et c'est au tour de l'IA (True)
+            eval_score, _ = minimax(simulated_state, depth - 1, True, player_id, eval_func)
+            
+            if eval_score < min_eval:
+                min_eval = eval_score
+                best_move = move
+                
+        return min_eval, best_move
 
 def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_func):
     """
-    Version optimisée de Minimax avec élagage Alpha-Bêta.
-    Coupe les branches de l'arbre qui ne servent à rien pour accélérer le calcul.
-    :param alpha: La meilleure valeur trouvée pour le maximisant (IA).
-    :param beta: La meilleure valeur trouvée pour le minimisant (Adversaire).
+    Version optimisée du Minimax avec élagage Alpha-Bêta.
+    Permet de chercher plus profondément en ignorant les mauvais coups évidents.
     """
-    pass
+    # --- 1. CONDITION D'ARRÊT ---
+    if depth == 0 or state.is_terminal():
+        if state.is_terminal():
+            winner = rules.get_winner(state.scores, state.moves_without_capture, state.current_player)
+            if winner == player_id:
+                return float('inf'), None  # Victoire
+            elif winner is None:
+                return 0, None             # Nul
+            else:
+                return float('-inf'), None # Défaite
+                
+        return eval_func(state, player_id), None
+
+    best_move = None
+
+    # --- 2. TOUR DE L'IA (Maximisant) ---
+    if maximizing_player:
+        max_eval = float('-inf')
+        moves = state.get_legal_moves(state.current_player)
+        
+        if not moves:
+            return eval_func(state, player_id), None
+            
+        for move in moves:
+            simulated_state = state.copy()
+            simulated_state.apply_move(move)
+            
+            eval_score, _ = alpha_beta(simulated_state, depth - 1, alpha, beta, False, player_id, eval_func)
+            
+            if eval_score > max_eval:
+                max_eval = eval_score
+                best_move = move
+                
+            # --- L'ÉLAGAGE ALPHA-BÊTA ---
+            # On met à jour alpha (le meilleur score garanti pour l'IA)
+            alpha = max(alpha, eval_score)
+            # Si le score garanti de l'adversaire (beta) est déjà pire ou égal à notre alpha,
+            # on arrête de chercher dans cette branche : l'adversaire ne nous laissera jamais venir ici !
+            if beta <= alpha:
+                break 
+                
+        return max_eval, best_move
+
+    # --- 3. TOUR DE L'ADVERSAIRE (Minimisant) ---
+    else:
+        min_eval = float('inf')
+        moves = state.get_legal_moves(state.current_player)
+        
+        if not moves:
+            return eval_func(state, player_id), None
+            
+        for move in moves:
+            simulated_state = state.copy()
+            simulated_state.apply_move(move)
+            
+            eval_score, _ = alpha_beta(simulated_state, depth - 1, alpha, beta, True, player_id, eval_func)
+            
+            if eval_score < min_eval:
+                min_eval = eval_score
+                best_move = move
+                
+            # --- L'ÉLAGAGE ALPHA-BÊTA ---
+            # On met à jour beta (le meilleur score garanti pour l'adversaire)
+            beta = min(beta, eval_score)
+            # Si l'adversaire voit qu'on a déjà un coup meilleur (alpha) ailleurs,
+            # il sait qu'on ne choisira jamais cette branche. Il arrête de chercher.
+            if beta <= alpha:
+                break
+                
+        return min_eval, best_move
 
 def iterative_deepening(state, time_limit, player_id, eval_func):
     """

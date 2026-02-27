@@ -101,3 +101,32 @@ class GameState:
         if not self.deadlock_active:
             self.deadlock_active = True
             self.moves_without_capture = 0
+            
+    def copy(self):
+        """
+        Crée une copie profonde (deep copy) de l'état du jeu actuel.
+        C'est indispensable pour que le Minimax puisse simuler des coups 
+        sans modifier le vrai plateau affiché à l'écran.
+        """
+        # On crée un nouvel objet GameState vierge
+        new_state = GameState()
+        
+        # 1. Copie du plateau (Liste 2D)
+        # On utilise une compréhension de liste pour copier chaque ligne indépendamment
+        new_state.board = [row[:] for row in self.board]
+        
+        # 2. Copie des listes et dictionnaires
+        new_state.scores = self.scores[:] # Le [:] clone la liste
+        
+        new_state.captured_pieces = {
+            0: self.captured_pieces[0][:],
+            1: self.captured_pieces[1][:]
+        }
+        
+        # 3. Copie des variables simples (entiers, booléens, tuples)
+        new_state.current_player = self.current_player
+        new_state.last_move = self.last_move # C'est un tuple (immuable), on peut le copier tel quel
+        new_state.moves_without_capture = self.moves_without_capture
+        new_state.deadlock_active = self.deadlock_active
+        
+        return new_state

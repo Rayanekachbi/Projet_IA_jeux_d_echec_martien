@@ -1,34 +1,107 @@
 # src/ai/heuristics.py
+import rules
+from constants import *
 
 """
 Contient les fonctions d'évaluation pour l'IA.
 Chaque fonction prend un état (GameState) et un joueur, et retourne un score numérique.
 """
-
-# gemini a genere random mais si je m'en rappel la prof a dit pas de randomisation des coups pour l'IA!!!!!
-def eval_random(state, player):
+def eval_score_only(state, player_id):
     """
     Niveau Facile.
-    Retourne une valeur totalement aléatoire, peu importe l'état du plateau.
-    L'IA jouera n'importe comment.
+    L'IA ne regarde que les points officiels déjà marqués.
+    Elle ne prévoit rien à l'avance et joue purement à l'instinct.
     """
-    pass
+    opponent_id = 1 - player_id
+    
+    my_score = state.scores[player_id]
+    opponent_score = state.scores[opponent_id]
+    
+    return my_score - opponent_score
 
-def eval_material(state, player):
+
+
+def eval_material(state, player_id):
     """
     Niveau Moyen.
-    Calcule le score basé uniquement sur la différence de points matériel.
-    Score = (Valeur de mes pièces capturées) - (Valeur des pièces capturées par l'adversaire).
-    Ou bien (Valeur des pièces restantes sur le plateau).
+    L'IA prend en compte le score officiel ET le "potentiel" sur le plateau.
+    Elle préférera les coups qui amènent/gardent des pièces fortes sur son territoire.
     """
-    pass
+    opponent_id = 1 - player_id
+    
+    # Le score officiel (Priorité absolue : on multiplie par 100)
+    # Ainsi, une vraie capture d'un pion (+100) vaudra toujours plus 
+    # que juste déplacer une Reine sur son terrain (+3).
+    score_diff = (state.scores[player_id] - state.scores[opponent_id]) * 100
+    
+    # Le calcul du matériel sur le plateau
+    my_board_value = 0
+    opp_board_value = 0
+    
+    # On scanne toutes les lignes et colonnes
+    for r in range(ROWS):
+        for c in range(COLS):
+            piece = state.board[r][c]
+            
+            if piece != EMPTY:
+                # À qui appartient la zone où se trouve la pièce ?
+                owner = rules.piece_owner(r)
+                piece_val = PIECE_VALUES[piece] # Vaut 1, 2 ou 3
+                
+                if owner == player_id:
+                    my_board_value += piece_val
+                else:
+                    opp_board_value += piece_val
+                    
+    # La différence de force sur le plateau
+    board_diff = my_board_value - opp_board_value
+    
+    # La note finale
+    return score_diff + board_diff
 
-def eval_positional(state, player):
+def eval_positional(state, player_id):
     """
     Niveau Difficile.
-    Prend en compte le matériel MAIS AUSSI la position stratégique :
-    - Contrôle du centre.
-    - Menace de vider sa zone (pour finir la partie si on gagne).
-    - Protection des pièces importantes (Reines).
+    Prend en compte le matériel, mais ajoute une compréhension stratégique du jeu :
+    - Contrôle du canal (midline).
+    - Gestion de la fin de partie (Vider sa zone si on gagne, fuir la fin si on perd).
     """
-    pass
+    opponent_id = 1 - player_id
+    
+    base_score = eval_material(state, player_id)
+    
+    positional_bonus = 0
+    my_piece_count = 0
+    
+    # On analyse le placement et on compte nos pièces
+    for r in range(ROWS):
+        for c in range(COLS):
+            piece = state.board[r][c]
+            if piece != EMPTY:
+                owner = rules.piece_owner(r)
+                
+                if owner == player_id:
+                    my_piece_count += 1
+                    # Bonus si la pièce est juste au bord du canal (lignes centrales)
+                    if r == MIDLINE - 1 or r == MIDLINE:
+                        positional_bonus += 5
+                else:
+                    # Malus si l'adversaire est collé au canal
+                    if r == MIDLINE - 1 or r == MIDLINE:
+                        positional_bonus -= 5 
+
+    # Stratégie de fin de partie (Zone Vide)
+    my_score = state.scores[player_id]
+    opp_score = state.scores[opponent_id]
+    
+    if my_score > opp_score:
+        # L'IA gagne ! Elle veut vider sa zone pour forcer la fin.
+        # Plus elle a un nombre de pièces FAIBLE, plus le bonus est FORT.
+        positional_bonus += (10 - my_piece_count) * 15 
+        
+    elif my_score < opp_score:
+        # L'IA perd ! Elle veut garder des pièces pour ne pas perdre bêtement.
+        if my_piece_count <= 2:
+            positional_bonus -= 50 # Grosse pénalité si elle est sur le point de se vider
+            
+    return base_score + positional_bonus
