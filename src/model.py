@@ -15,6 +15,7 @@ class GameState:
         self.deadlock_active = False
         self.captured_pieces = {0: [], 1: []}
 
+
     def initial_board(self):
         #compréhension de liste imbriquée
         board = [[EMPTY for _ in range(COLS)] for _ in range(ROWS)]
@@ -82,6 +83,7 @@ class GameState:
             
         self.last_move = move
         self.current_player = self.opponent(self.current_player)
+
 
     def has_pieces(self, player):
         for r in range(ROWS):

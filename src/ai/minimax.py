@@ -6,6 +6,16 @@ Implémentation des algorithmes de recherche.
 
 import rules
 
+
+def move_priority(move):
+    if isinstance(move, tuple) and move[0] == "fusion":
+        return 3
+    if len(move) == 4:
+        return 2
+    return 1
+
+
+
 def minimax(state, depth, maximizing_player, player_id, eval_func):
     """
     Algorithme Minimax classique.
@@ -78,6 +88,7 @@ def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_fun
     """
     # --- 1. CONDITION D'ARRÊT ---
     if depth == 0 or state.is_terminal():
+
         if state.is_terminal():
             winner = rules.get_winner(state.scores, state.moves_without_capture, state.current_player)
             if winner == player_id:
@@ -86,8 +97,10 @@ def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_fun
                 return 0, None             # Nul
             else:
                 return float('-inf'), None # Défaite
-                
-        return eval_func(state, player_id), None
+
+        my_moves = state.get_legal_moves(player_id)
+        opp_moves = state.get_legal_moves(1 - player_id)
+        return eval_func(state, player_id, len(my_moves), len(opp_moves)), None
 
     best_move = None
 
@@ -95,9 +108,10 @@ def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_fun
     if maximizing_player:
         max_eval = float('-inf')
         moves = state.get_legal_moves(state.current_player)
-        
+
+        moves.sort(key=move_priority, reverse=True)
         if not moves:
-            return eval_func(state, player_id), None
+            return eval_func(state, player_id, 0, 0), None
             
         for move in moves:
             simulated_state = state.copy()
@@ -123,9 +137,10 @@ def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_fun
     else:
         min_eval = float('inf')
         moves = state.get_legal_moves(state.current_player)
-        
+
+        moves.sort(key=move_priority)
         if not moves:
-            return eval_func(state, player_id), None
+            return eval_func(state, player_id, 0, 0), None
             
         for move in moves:
             simulated_state = state.copy()

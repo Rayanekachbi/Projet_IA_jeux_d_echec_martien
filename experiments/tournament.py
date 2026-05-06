@@ -18,19 +18,21 @@ DIFFICULTY_NAMES = {
     2: "Moyen",
     3: "Difficile"
 }
-def play_game(ai_0, ai_1, max_moves=500):
+def play_game(ai_0, ai_1, max_moves=100):
     game = GameState()
     players = {0: ai_0, 1: ai_1}
 
     start_time = time.time()
     winner = None
+    moves = {0: 0, 1: 0}
+    times = {0: 0.0, 1: 0.0}
 
     move_count = 0
 
     while True:
         move_count += 1
 
-        # ✅ Sécurité anti boucle infinie
+        # Sécurité anti boucle infinie
         if move_count > max_moves:
             winner = None  # considéré comme nul
             break
@@ -38,7 +40,11 @@ def play_game(ai_0, ai_1, max_moves=500):
         current_player = game.current_player
         current_ai = players[current_player]
 
+        t0 = time.time()
         move = current_ai.get_move(game)
+        t1 = time.time()
+        times[current_player] += (t1 - t0)
+        moves[current_player] += 1
 
         if move is None:
             break
@@ -54,14 +60,18 @@ def play_game(ai_0, ai_1, max_moves=500):
             break
 
     duration = time.time() - start_time
-    return winner, duration
+    return winner, duration, moves, times
 
 def play_match(ai_1, ai_2, games_count=50):
     results = {
         "ai1_wins": 0,
         "ai2_wins": 0,
         "draws": 0,
-        "total_time": 0
+        "total_time": 0,
+        "ai1_moves": 0,
+        "ai2_moves": 0,
+        "ai1_time": 0,
+        "ai2_time": 0
     }
 
     for i in range(games_count):
@@ -76,13 +86,24 @@ def play_match(ai_1, ai_2, games_count=50):
             p1 = AIPlayer(1, difficulty=ai_1)
             swapped = True
 
-        winner, duration = play_game(p0, p1)
+        winner, duration, moves, times = play_game(p0, p1)
         results["total_time"] += duration
 
+        # gérer le swap AVANT accumulation
+        if swapped:
+            moves = {0: moves[1], 1: moves[0]}
+            times = {0: times[1], 1: times[0]}
+
+        # toujours accumuler
+        results["ai1_moves"] += moves[0]
+        results["ai2_moves"] += moves[1]
+        results["ai1_time"] += times[0]
+        results["ai2_time"] += times[1]
+
+        # ensuite gérer le résultat
         if winner is None:
             results["draws"] += 1
         else:
-            # remettre dans le bon sens
             if swapped:
                 winner = 1 - winner
 
@@ -91,7 +112,20 @@ def play_match(ai_1, ai_2, games_count=50):
             else:
                 results["ai2_wins"] += 1
 
+
+
+
     results["avg_time"] = results["total_time"] / games_count
+
+    results["ai1_avg_time_per_move"] = (
+        results["ai1_time"] / results["ai1_moves"]
+        if results["ai1_moves"] > 0 else 0
+    )
+
+    results["ai2_avg_time_per_move"] = (
+        results["ai2_time"] / results["ai2_moves"]
+        if results["ai2_moves"] > 0 else 0
+    )
     return results
 
 import csv
@@ -103,7 +137,10 @@ def save_results(results, filename="results.csv"):
         writer.writerow([
             "IA 1", "IA 2",
             "Victoires IA1", "Victoires IA2",
-            "Nuls", "Temps moyen"
+            "Nuls",
+            "Temps moyen (partie)",
+            "Temps moyen coup IA1",
+            "Temps moyen coup IA2"
         ])
 
         for r in results:
@@ -113,7 +150,9 @@ def save_results(results, filename="results.csv"):
                 r["ai1_wins"],
                 r["ai2_wins"],
                 r["draws"],
-                round(r["avg_time"], 4)
+                round(r["avg_time"], 4),
+                round(r["ai1_avg_time_per_move"], 6),
+                round(r["ai2_avg_time_per_move"], 6)
             ])
 
 if __name__ == "__main__":
@@ -125,7 +164,7 @@ if __name__ == "__main__":
     all_results = []
 
     for i in range(len(difficulties)):
-        for j in range(i + 1, len(difficulties)):
+        for j in range(i, len(difficulties)):
 
             d1 = difficulties[i]
             d2 = difficulties[j]

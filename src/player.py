@@ -59,16 +59,22 @@ class AIPlayer(Player):
         Calcule et retourne le meilleur coup pour l'IA.
         """
         print(f"IA {self.player_id} réfléchit...")
-        
+
         # 1. GESTION STRATÉGIQUE DU DEADLOCK
         # Si l'IA mène au score et que le deadlock n'est pas actif,
         # elle appuie "virtuellement" sur le bouton Deadlock pour presser l'adversaire !
         opponent_id = 1 - self.player_id
-        if state.scores[self.player_id] > state.scores[opponent_id]:
-            if not state.deadlock_active:
-                print(f"L'IA {self.player_id} réclame le Deadlock !")
-                state.enable_deadlock()
+        if state.moves_without_capture >= 10:
+            if state.scores[self.player_id] > state.scores[opponent_id]:
+                if not state.deadlock_active:
+                    print(f"L'IA {self.player_id} réclame le Deadlock !")
+                    state.enable_deadlock()
 
+
+        if state.moves_without_capture >= 30:
+                if not state.deadlock_active:
+                    print(f"L'IA {self.player_id} réclame le Deadlock !")
+                    state.enable_deadlock()
         # 2. APPEL DE L'ALGORITHME DE RECHERCHE
         # On utilise l'Alpha-Bêta pour aller vite
         # alpha = -infini, beta = +infini, maximizing_player = True

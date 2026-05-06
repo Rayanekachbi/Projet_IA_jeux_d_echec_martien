@@ -6,7 +6,7 @@ from constants import *
 Contient les fonctions d'évaluation pour l'IA.
 Chaque fonction prend un état (GameState) et un joueur, et retourne un score numérique.
 """
-def eval_score_only(state, player_id):
+def eval_score_only(state, player_id, mobility=0, opp_mobility=0):
     """
     Niveau Facile.
     L'IA ne regarde que les points officiels déjà marqués.
@@ -16,12 +16,12 @@ def eval_score_only(state, player_id):
     
     my_score = state.scores[player_id]
     opponent_score = state.scores[opponent_id]
-    
-    return my_score - opponent_score
+    stall_penalty = state.moves_without_capture * 10
+    return my_score - opponent_score - stall_penalty
 
 
 
-def eval_material(state, player_id):
+def eval_material(state, player_id, mobility=0, opp_mobility=0):
     """
     Niveau Moyen.
     L'IA prend en compte le score officiel ET le "potentiel" sur le plateau.
@@ -55,11 +55,13 @@ def eval_material(state, player_id):
                     
     # La différence de force sur le plateau
     board_diff = my_board_value - opp_board_value
-    
-    # La note finale
-    return score_diff + board_diff
 
-def eval_positional(state, player_id):
+
+    # La note finale
+    stall_penalty = state.moves_without_capture * 5
+    return score_diff + board_diff - stall_penalty
+
+def eval_positional(state, player_id, mobility=0, opp_mobility=0):
     """
     Niveau Difficile.
     Prend en compte le matériel, mais ajoute une compréhension stratégique du jeu :
@@ -67,7 +69,7 @@ def eval_positional(state, player_id):
     - Gestion de la fin de partie (Vider sa zone si on gagne, fuir la fin si on perd).
     """
     opponent_id = 1 - player_id
-    
+
     base_score = eval_material(state, player_id)
     
     positional_bonus = 0
@@ -103,5 +105,10 @@ def eval_positional(state, player_id):
         # L'IA perd ! Elle veut garder des pièces pour ne pas perdre bêtement.
         if my_piece_count <= 2:
             positional_bonus -= 50 # Grosse pénalité si elle est sur le point de se vider
-            
-    return base_score + positional_bonus
+
+
+
+    mobility_score = (mobility - opp_mobility) * 2
+    stall_penalty = state.moves_without_capture * 5
+
+    return base_score + positional_bonus + mobility_score
