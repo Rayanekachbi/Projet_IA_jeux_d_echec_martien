@@ -97,6 +97,9 @@ def create_player(player_id, selection):
         return AIPlayer(player_id, difficulty=selection)
 
 def main():
+    total_moves = 0
+    move_count = 0
+
     pygame.init()
     # On crée une fenêtre temporaire juste pour le menu
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
@@ -121,7 +124,10 @@ def main():
     
     while running:
         clock.tick(60)
-        
+        legal_moves = game.get_legal_moves(game.current_player)
+
+        total_moves += len(legal_moves)
+        move_count += 1
         # --- AFFICHAGE ---
         if not game_over:
             gui.update() 
@@ -213,6 +219,7 @@ def main():
                             else:
                                 gui.selected = None
 
+    print("Facteur de branchement moyen :", total_moves / move_count)
     pygame.quit()
 
 if __name__ == "__main__":

@@ -15,7 +15,7 @@ from player import AIPlayer
 
 DIFFICULTY_NAMES = {
     1: "Facile",
-    2: "Moyen",
+    2: "Moyenne",
     3: "Difficile"
 }
 def play_game(ai_0, ai_1, max_moves=100):
@@ -28,6 +28,8 @@ def play_game(ai_0, ai_1, max_moves=100):
     times = {0: 0.0, 1: 0.0}
 
     move_count = 0
+    total_branching = 0
+    branching_samples = 0
 
     while True:
         move_count += 1
@@ -39,6 +41,12 @@ def play_game(ai_0, ai_1, max_moves=100):
 
         current_player = game.current_player
         current_ai = players[current_player]
+
+        legal_moves_count = len(game.get_legal_moves(current_player))
+
+        total_branching += legal_moves_count
+        branching_samples += 1
+
 
         t0 = time.time()
         move = current_ai.get_move(game)
@@ -60,7 +68,12 @@ def play_game(ai_0, ai_1, max_moves=100):
             break
 
     duration = time.time() - start_time
-    return winner, duration, moves, times
+    avg_branching = (
+        total_branching / branching_samples
+        if branching_samples > 0 else 0
+    )
+
+    return winner, duration, moves, times, avg_branching
 
 def play_match(ai_1, ai_2, games_count=50):
     results = {
@@ -71,11 +84,13 @@ def play_match(ai_1, ai_2, games_count=50):
         "ai1_moves": 0,
         "ai2_moves": 0,
         "ai1_time": 0,
-        "ai2_time": 0
+        "ai2_time": 0,
+        "branching_total": 0,
+        "avg_branching": 0,
     }
 
     for i in range(games_count):
-
+        print(f"Match {i}")
         # Alternance : 25/25
         if i < games_count // 2:
             p0 = AIPlayer(0, difficulty=ai_1)
@@ -86,7 +101,7 @@ def play_match(ai_1, ai_2, games_count=50):
             p1 = AIPlayer(1, difficulty=ai_1)
             swapped = True
 
-        winner, duration, moves, times = play_game(p0, p1)
+        winner, duration, moves, times, branching = play_game(p0, p1)
         results["total_time"] += duration
 
         # gérer le swap AVANT accumulation
@@ -99,6 +114,7 @@ def play_match(ai_1, ai_2, games_count=50):
         results["ai2_moves"] += moves[1]
         results["ai1_time"] += times[0]
         results["ai2_time"] += times[1]
+        results["branching_total"] += branching
 
         # ensuite gérer le résultat
         if winner is None:
@@ -126,11 +142,15 @@ def play_match(ai_1, ai_2, games_count=50):
         results["ai2_time"] / results["ai2_moves"]
         if results["ai2_moves"] > 0 else 0
     )
+
+    results["avg_branching"] = (
+            results["branching_total"] / games_count
+    )
     return results
 
 import csv
 
-def save_results(results, filename="results.csv"):
+def save_results(results, filename="results_profondeur_egal.csv"):
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
 
@@ -140,7 +160,8 @@ def save_results(results, filename="results.csv"):
             "Nuls",
             "Temps moyen (partie)",
             "Temps moyen coup IA1",
-            "Temps moyen coup IA2"
+            "Temps moyen coup IA2",
+            "Facteur branchement"
         ])
 
         for r in results:
@@ -152,7 +173,8 @@ def save_results(results, filename="results.csv"):
                 r["draws"],
                 round(r["avg_time"], 4),
                 round(r["ai1_avg_time_per_move"], 6),
-                round(r["ai2_avg_time_per_move"], 6)
+                round(r["ai2_avg_time_per_move"], 6),
+                round(r["avg_branching"], 2)
             ])
 
 if __name__ == "__main__":
@@ -164,14 +186,14 @@ if __name__ == "__main__":
     all_results = []
 
     for i in range(len(difficulties)):
-        for j in range(i, len(difficulties)):
+        for j in range(i+1, len(difficulties)):
 
             d1 = difficulties[i]
             d2 = difficulties[j]
 
             print(f"Match IA {d1} vs IA {d2}...")
 
-            result = play_match(d1, d2, games_count=50)
+            result = play_match(d1, d2, games_count=4)
 
             result["ai1_name"] = DIFFICULTY_NAMES[d1]
             result["ai2_name"] = DIFFICULTY_NAMES[d2]

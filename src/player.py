@@ -46,13 +46,13 @@ class AIPlayer(Player):
             
         elif difficulty == 2:
             self.depth = 3
-            self.eval_func = heur.eval_material
-            print(f"Joueur {player_id} initialisé : IA Moyenne")
-            
-        else: # difficulty == 3
-            self.depth = 4
             self.eval_func = heur.eval_positional
+            print(f"Joueur {player_id} initialisé : IA Moyenne")
+        elif difficulty == 3:
+            self.depth = 4
+            self.eval_func = heur.eval_pression
             print(f"Joueur {player_id} initialisé : IA Difficile")
+
 
     def get_move(self, state, gui=None):
         """
