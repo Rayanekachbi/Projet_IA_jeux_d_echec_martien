@@ -161,11 +161,3 @@ def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_fun
                 break
                 
         return min_eval, best_move
-
-def iterative_deepening(state, time_limit, player_id, eval_func):
-    """
-    (Optionnel mais recommandé pour les tournois).
-    Lance Alpha-Bêta à profondeur 1, puis 2, puis 3... tant qu'il reste du temps.
-    Permet de toujours avoir une réponse prête si le temps est écoulé.
-    """
-    pass
