@@ -1,0 +1,7 @@
+IA 1,IA 2,Victoires IA1,Victoires IA2,Nuls,Temps moyen (partie),Temps moyen coup IA1,Temps moyen coup IA2,Facteur branchement
+Facile,Facile,28,22,0,0.2104,0.003895,0.003841,19.16
+Facile,Moyenne,2,48,0,0.4825,0.004501,0.015269,21.63
+Facile,Difficile,0,49,1,0.4231,0.004053,0.018263,18.96
+Moyenne,Moyenne,26,23,1,1.3781,0.028361,0.027836,27.71
+Moyenne,Difficile,17,26,7,1.3999,0.021893,0.029794,26.2
+Difficile,Difficile,25,25,0,1.5347,0.029347,0.028749,22.33

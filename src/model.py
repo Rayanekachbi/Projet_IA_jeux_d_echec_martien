@@ -14,6 +14,7 @@ class GameState:
         self.moves_without_capture = 0
         self.deadlock_active = False
         self.captured_pieces = {0: [], 1: []}
+        #self.turn = 0 #utilisé pour la version avec random
 
 
     def initial_board(self):
@@ -83,6 +84,7 @@ class GameState:
             
         self.last_move = move
         self.current_player = self.opponent(self.current_player)
+        #self.turn += 1 #utilisé pour la version avec random
 
 
     def has_pieces(self, player):

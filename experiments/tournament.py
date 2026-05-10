@@ -62,8 +62,8 @@ def play_game(ai_0, ai_1, max_moves=100):
         if game.is_terminal():
             winner = rules.get_winner(
                 game.scores,
-                game.moves_without_capture,
-                game.current_player
+                game.current_player,
+                game.deadlock_active
             )
             break
 
@@ -150,7 +150,7 @@ def play_match(ai_1, ai_2, games_count=50):
 
 import csv
 
-def save_results(results, filename="results_profondeur_egal.csv"):
+def save_results(results, filename="results_random.csv"):
     with open(filename, "w", newline="") as f:
         writer = csv.writer(f)
 
@@ -186,14 +186,14 @@ if __name__ == "__main__":
     all_results = []
 
     for i in range(len(difficulties)):
-        for j in range(i+1, len(difficulties)):
+        for j in range(i, len(difficulties)):
 
             d1 = difficulties[i]
             d2 = difficulties[j]
 
             print(f"Match IA {d1} vs IA {d2}...")
 
-            result = play_match(d1, d2, games_count=4)
+            result = play_match(d1, d2, games_count=50)
 
             result["ai1_name"] = DIFFICULTY_NAMES[d1]
             result["ai2_name"] = DIFFICULTY_NAMES[d2]

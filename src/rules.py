@@ -112,12 +112,12 @@ def get_piece_moves(board, r, c, current_player):
     return moves
 
 # determine le vainqueur, Renvoie: 0 ou 1 (ID du gagnant), None : Match nul (Tie)
-def get_winner(scores, moves_without_capture, current_player):
+def get_winner(scores, current_player, deadlock_active):
     if scores[0] > scores[1]:
         return 0
     if scores[1] > scores[0]:
         return 1
-    if moves_without_capture >= 7:
+    if deadlock_active :
         return None
     # Si c'est une fin par "Zone Vide" (pas de deadlock), 
     # le joueur qui a provoqué la fin (celui qui vient de jouer) gagne le tie-breaker.

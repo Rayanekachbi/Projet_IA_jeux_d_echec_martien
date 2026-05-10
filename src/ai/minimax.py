@@ -24,7 +24,7 @@ def minimax(state, depth, maximizing_player, player_id, eval_func):
     # --- 1. CONDITION D'ARRÊT (La "photo" finale) ---
     if depth == 0 or state.is_terminal():
         if state.is_terminal():
-            winner = rules.get_winner(state.scores, state.moves_without_capture, state.current_player)
+            winner = rules.get_winner(state.scores, state.current_player, state.deadlock_active)
             if winner == player_id:
                 return float('inf'), None  # Victoire absolue
             elif winner is None:
@@ -90,7 +90,7 @@ def alpha_beta(state, depth, alpha, beta, maximizing_player, player_id, eval_fun
     if depth == 0 or state.is_terminal():
 
         if state.is_terminal():
-            winner = rules.get_winner(state.scores, state.moves_without_capture, state.current_player)
+            winner = rules.get_winner(state.scores, state.current_player, state.deadlock_active)
             if winner == player_id:
                 return float('inf'), None  # Victoire
             elif winner is None:

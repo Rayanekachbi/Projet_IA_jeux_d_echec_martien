@@ -1,4 +1,5 @@
 # src/player.py
+import random
 
 import ai.heuristics as heur
 from ai.minimax import alpha_beta
@@ -78,6 +79,31 @@ class AIPlayer(Player):
         # 2. APPEL DE L'ALGORITHME DE RECHERCHE
         # On utilise l'Alpha-Bêta pour aller vite
         # alpha = -infini, beta = +infini, maximizing_player = True
+        """""
+            #si on est dans les 3 premier coup faire un choix random sur les meilleurs coups
+        if state.turn < 4:
+            moves = state.get_legal_moves(self.player_id)
+
+            scored_moves = []
+            for move in moves:
+                sim = state.copy()
+                sim.apply_move(move)
+                score = self.eval_func(sim, self.player_id)
+                scored_moves.append((score, move))
+
+            # tri du meilleur au pire
+            scored_moves.sort(reverse=True, key=lambda x: x[0])
+
+            best_score = scored_moves[0][0]
+
+            best_moves = [
+                move for score, move in scored_moves
+                if score >= best_score - 1
+            ]
+
+            return random.choice(best_moves)
+        """
+
         meilleur_score, meilleur_coup = alpha_beta(
             state, 
             self.depth, 

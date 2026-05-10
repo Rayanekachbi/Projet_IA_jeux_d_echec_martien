@@ -154,7 +154,7 @@ def main():
                 
                 if game.is_terminal():
                     game_over = True
-                    winner = rules.get_winner(game.scores, game.moves_without_capture, game.current_player)
+                    winner = rules.get_winner(game.scores, game.current_player, game.deadlock_active)
             
             # On vide la file d'événements Pygame pour éviter que la fenêtre "ne réponde pas" 
             # pendant le temps de calcul de l'IA
@@ -212,7 +212,7 @@ def main():
                             
                             if game.is_terminal():
                                 game_over = True
-                                winner = rules.get_winner(game.scores, game.moves_without_capture, game.current_player)
+                                winner = rules.get_winner(game.scores, game.current_player, game.deadlock_active)
                         else:
                             if game.board[r][c] != "." and rules.is_own_side(r, game.current_player):
                                 gui.selected = (r, c)
