@@ -1,3 +1,6 @@
+Mettez vous dans le répertoire MartianChess :
+cd MartianChess
+
 Résumé des commandes :
 Pour créer un environnement : 
 
