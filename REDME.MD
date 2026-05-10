@@ -1,31 +1,53 @@
-Résumé des commandes :
-Pour créer un environnement : 
+# Résumé des commandes
 
-# Windows : 
+## Pour créer un environnement
+
+### Windows
+```bash
 # Créer l'environnement
 python -m venv venv
+
 # Activer l'environnement
 .\venv\Scripts\activate
+```
 
-#Mac/Linux : 
+### Mac/Linux
+
+```bash
 # Créer l'environnement
 python3 -m venv venv
+
 # Activer l'environnement
 source venv/bin/activate
+```
 
-Pour Installer les dépendances et lancer le jeu : 
+---
 
-#Installation : 
+## Pour installer les dépendances et lancer le jeu
+
+### Installation
+
+```bash
 pip install -r requirements.txt
+```
 
-#Jouer : 
+### Jouer
+
+```bash
 python src/main.py
+```
 
-#Tournoi : 
+### Tournoi
+
+```bash
 python experiments/tournament.py
+```
 
+---
 
-#Arborescence : 
+# Arborescence
+
+```text
 MartianChess/
 │
 ├── README.md               # Instructions d'installation et règles (Livrable)
@@ -44,3 +66,5 @@ MartianChess/
 │
 └── experiments/            # Génération des données pour le rapport
     └── tournament.py       # Script pour lancer 50+ parties IA vs IA
+```
+
