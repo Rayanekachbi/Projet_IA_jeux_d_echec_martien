@@ -6,6 +6,10 @@
 
 Ce projet implémente un moteur de jeu et une Intelligence Artificielle pour le **Jeu d'échecs martien**. L'objectif principal est la conception d'agents intelligents capables d'évaluer des états de jeu complexes, d'anticiper les coups adverses et d'optimiser leur temps de réflexion grâce à des algorithmes de recherche heuristique.
 
+Le jeu mélange jeu d'échec et controle de terrain, les propriétaires des pièces sont désignés par rapport à leur position sur le terrain de quoi bien complexifier le facteur de branchement.
+
+👉 **Tous les détails sur les règles du jeu se trouvent dans le fichier PDF :** `Rapport de projet et de l'étude scientifique.pdf` **présent à la racine du dépôt.**
+
 ![Interface du Menu](img/menu.png)
 ![Interface de Jeu](img/jeu.png)
 
@@ -32,6 +36,7 @@ L'IA propose 3 niveaux de difficulté distincts, basés sur la profondeur de l'a
 Pour valider la robustesse de notre moteur, nous avons mis en place un système de tournois automatisés (`tournament.py`) faisant s'affronter les différentes IA sur des dizaines de parties pour récolter des données précises (temps de réflexion, facteur de branchement, taux de victoire...).
 
 🔬 **L'étude scientifique de ces résultats a été menée sous tous les angles** (impact de la profondeur, temps de calcul, évaluation des heuristiques, parties avec profondeur égale ou aléatoire). 
+
 👉 **Tous les détails et les analyses complètes se trouvent dans le fichier PDF :** `Rapport de projet et de l'étude scientifique.pdf` **présent à la racine du dépôt.**
 
 **Aperçu des performances (Tournoi classique) :**
